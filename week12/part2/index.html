@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+	<head>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<title>Week 12 – Part 2</title>
+		<link rel="preload" as="fetch" type="text/wgsl" href="shader.wgsl" crossorigin="anonymous">
+		<script type="module" src="main.js"></script>
+		<link rel="stylesheet" href="../../style.css">
+	</head>
+	<body>
+		<canvas width="512" height="512"></canvas>
+		<aside class="options">
+			<button id="anim">Pause animation</button>
+			<button id="step">Step animation</button><br>
+			<label for="jumpvel">Jump velocity</label><input type="range" min="0" max="6" step="0.25" value="4" id="jumpvel"></input><br>
+			<label for="stretch">Stretch factor</label><input type="range" min="0" max="0.25" step="0.01" value="0.05" id="stretch"></input><br>
+			<label for="squash">Squash factor</label><input type="range" min="0" max="0.25" step="0.01" value="0.1" id="squash"></input><br>
+			<label for="squashdur">Squash duration</label><input type="range" min="0" max="1" step="0.1" value="0.5" id="squashdur"></input>
+		</aside>
+	</body>
+</html>
