@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+	<head>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<title>Week 3 – Part 3</title>
+		<link rel="stylesheet" href="../../style.css">
+		<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.18.7/dist/katex.min.css" integrity="sha384-JctiRyLzXCrSoOOzFlSoWLdyzQl7OrrRnhyeBmzB6ZWtcjccUyc8lCQJqIbs3uQX" crossorigin="anonymous">
+		<script defer src="https://cdn.jsdelivr.net/npm/katex@0.18.7/dist/katex.min.js" integrity="sha384-+7Keh381hSkXmXqnjC0JBM/kzsN6TFj+wMKychSLjTvJ8/0ElMde2uKl8i6p6Buj" crossorigin="anonymous"></script>
+		<script defer src="https://cdn.jsdelivr.net/npm/katex@0.18.7/dist/contrib/auto-render.min.js" integrity="sha384-bjyGPfbij8/NDKJhSGZNP/khQVgtHUE5exjm4Ydllo42FwIgYsdLO2lXGmRBf5Mz" crossorigin="anonymous"></script>
+		<script type="module">renderMathInElement(document.body, { delimiters: [{ left: "$$", right: "$$", display: true }, { left: "$", right: "$", display: false }] });</script>
+	</head>
+	<body>
+		<main>
+			<h2>Part 1</h2>
+			<p>The transformation matrices used in part 1 are:</p>
+			<ul>
+				<li>The translation and scaling matrix, $M_{st}$, that maps the projected Z-coordinate from $[-1,1]$ to $[0,1]$, so OpenGL-style projection matrices can be used.</li>
+				<li>An orthographic projection matrix, $P$.</li>
+				<li>As the cube already has the right coordinates (in the range $[0,1]$), there was no need for a model matrix, as no transformation was necessary. You could say there's an implicit model matrix $M$, which is just the identity matrix.</li>
+				<li>A view matrix, $V$, to put the cube into an isometric view.</li>
+			</ul>
+			<p>The model-view-projection matrix is then simply $M_{st}PV$. If you want to write the implicit model matrix as well, the full expression would be $M_{st}PV\!M$.</p>
+			<h2>Part 2</h2>
+			<p>For part 2, the same $M_{st}$ matrix was used along with:</p>
+			<ul>
+				<li>A perspective projection matrix, $P$.</li>
+				<li>A view matrix, $V$, to make the camera look up the Z-axis, with some distance from the origin.</li>
+				<li>A translation matrix, $T$, to put the cube's centre at the origin for easier rotation.</li>
+				<li>A matrix for rotation around the vertical axis, $R_y$.</li>
+				<li>A matrix for rotation around the X-axis, $R_x$.</li>
+				<li>The code does a shorthand, but each cube has another translation matrix along the X-axis, $T_i$ to separate them from each other.</li>
+			</ul>
+			<p>The three cubes then have the following model matrices:</p>
+			<ul>
+				<li>$M_1 = T_1T$</li>
+				<li>$M_2 = T_2R_yT$</li>
+				<li>$M_3 = T_3R_xR_yT$</li>
+			</ul>
+			<p>Each model matrix is then transformed by the view-projection matrix to get a model-view-projection matrix for each cube, so everything combined would be:</p>
+			<ul>
+				<li>$M_{MVP,1} = M_{st}PVT_1T$</li>
+				<li>$M_{MVP,2} = M_{st}PVT_2R_yT$</li>
+				<li>$M_{MVP,3} = M_{st}PVT_3R_xR_yT$</li>
+			</ul>
+		</main>
+	</body>
+</html>

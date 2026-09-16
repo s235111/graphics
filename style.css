@@ -15,3 +15,7 @@ body:has(.options) {
 	grid-template-columns: auto 512px;
 	gap: 16px;
 }
+
+body main {
+	max-width: 60rem;
+}
