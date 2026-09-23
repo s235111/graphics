@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+	<head>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<title>Week 4 – Part 6</title>
+		<link rel="stylesheet" href="../../style.css">
+		<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.18.7/dist/katex.min.css" integrity="sha384-JctiRyLzXCrSoOOzFlSoWLdyzQl7OrrRnhyeBmzB6ZWtcjccUyc8lCQJqIbs3uQX" crossorigin="anonymous">
+		<script defer src="https://cdn.jsdelivr.net/npm/katex@0.18.7/dist/katex.min.js" integrity="sha384-+7Keh381hSkXmXqnjC0JBM/kzsN6TFj+wMKychSLjTvJ8/0ElMde2uKl8i6p6Buj" crossorigin="anonymous"></script>
+		<script defer src="https://cdn.jsdelivr.net/npm/katex@0.18.7/dist/contrib/auto-render.min.js" integrity="sha384-bjyGPfbij8/NDKJhSGZNP/khQVgtHUE5exjm4Ydllo42FwIgYsdLO2lXGmRBf5Mz" crossorigin="anonymous"></script>
+		<script type="module">renderMathInElement(document.body, { delimiters: [{ left: "$$", right: "$$", display: true }, { left: "$", right: "$", display: false }] });</script>
+	</head>
+	<body>
+		<main>
+			<h2>a) Flat, Gouraud, and Phong Shading</h2>
+			<p>Flat shading calculates lighting only once for each face, using the same colour for the entire face, causing edges to appear sharp.
+				This kind of shading works well if those hard edges are desired, when shading a cube for example,
+				but produces undesirable results for objects that are supposed to appear smooth, such as a sphere.</p>
+			<p>Gouraud shading calculates lighting information per vertex and interpolates the resulting colour across the face.
+				As lighting is calculated per vertex, vertex normals can be used, and edges can be made to look smoother.
+				This technique does produce visible artifacts, though, especially with specular highlights.</p>
+			<p>Phong shading uses the same principle as Gouraud shading, but calculates lighting information per fragment instead.
+				Instead of the resulting colour, vertex normals are interpolated across faces.
+				This drastically improves the visual quality of the lighting, again especially for specular highlights.</p>
+			<p>One way to do flat shading would be to not share vertices between faces,
+				instead giving each face its own set of vertices where all the normals are that of the face.
+				This wouldn't by itself make each face only consist of one colour,
+				only if no specular highlights or distance falloff is used.
+				I'm not sure if there's a way to calculate lighting information per face and not per vertex, given how the rendering pipeline is set up.</p>
+			<p>Based on my results, Phong shading definitely produces better results for specular highlights as well as for diffuse lighting.</p>
+			<h2>b) Directional and Point Lights</h2>
+			<p>A directional light has no position, only a direction.
+				This means only the orientation of a surface matters in terms of how it gets lit.
+				A point light has a position, but doesn't point in any particular direction.
+				Surfaces are lit depending on their orientation relative to this position as well as the distance to it.
+				A directional light can be thought of as a light at infinity with no distance falloff.
+				The point light position essentially becomes the direction of the directional light.</p>
+			<h2>c) Eye Position</h2>
+			<p>The eye position only affects the shading of objects in terms of the highlights.
+				Ambient and diffuse lighting don't depend on the position of the observer.</p>
+			<h2>d) Setting Specular to Zero</h2>
+			<p>Setting the specular term to $(0,0,0)$ essentially turns off specular highlights,
+				meaning only ambient and diffuse lighting are in effect. As described above,
+				this means the eye position no longer changes how the object is shaded.</p>
+			<h2>e) Increasing Shininess</h2>
+			<p>Increasing the shininess exponent causes the specular highlight to become “narrower”,
+				making the surface appear more glossy.</p>
+			<h2>f) Coordinate Space</h2>
+			<p>I used world space for calculating lighting.</p>
+		</main>
+	</body>
+</html>
