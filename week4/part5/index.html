@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+	<head>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<title>Week 4 – Part 5</title>
+		<link rel="preload" as="fetch" type="text/wgsl" href="shader.wgsl" crossorigin="anonymous">
+		<script type="module" src="main.js"></script>
+		<link rel="stylesheet" href="../../style.css">
+	</head>
+	<body>
+		<canvas width="512" height="512"></canvas>
+		<aside class="options">
+			<span id="subdivisions"></span><br>
+			<button id="inc">Increase</button>
+			<button id="dec">Decrease</button><br>
+			<button id="anim">Pause animation</button>
+			<div class="sliders" id="material">
+				<label for="Le">Emitted radiance (<math><msub><mi>L</mi><mi>e</mi></msub></math>)</label>
+				<input type="range" min="0" max="1" step="0.0625" value="0.75" id="Le">
+				<label for="La">Ambient radiance (<math><msub><mi>L</mi><mi>a</mi></msub></math>)</label>
+				<input type="range" min="0" max="1" step="0.0625" value="0.25" id="La">
+				<label for="kd">Diffuse coefficient (<math><msub><mi>k</mi><mi>d</mi></msub></math>)</label>
+				<input type="range" min="0" max="1" step="0.0625" value="1" id="kd">
+				<label for="ks">Specular coefficient (<math><msub><mi>k</mi><mi>s</mi></msub></math>)</label>
+				<input type="range" min="0" max="1" step="0.0625" value="1" id="ks">
+				<label for="s">Shininess (<math><mi>s</mi></math>)</label>
+				<input type="range" min="-1" max="3" step="0.125" value="1" id="s">
+			</div>
+		</aside>
+	</body>
+</html>
