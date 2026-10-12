@@ -10,5 +10,42 @@
 	</head>
 	<body>
 		<canvas width="768" height="512"></canvas>
+		<aside class="options">
+			<div class="selectgrid" style="margin-bottom: 1em;">
+				<div class="selectrow">
+					<span>Wrapping</span>
+					<label for="addressModeU">U</label>
+					<select id="addressModeU" size="2">
+						<option value="clamp-to-edge">Clamp</option>
+						<option value="repeat" selected>Repeat</option>
+					</select>
+					<label for="addressModeV">V</label>
+					<select id="addressModeV" size="2">
+						<option value="clamp-to-edge">Clamp</option>
+						<option value="repeat" selected>Repeat</option>
+					</select>
+				</div>
+				<div class="selectrow">
+					<span>Filtering</span>
+					<label for="minFilter">Minification</label>
+					<select id="minFilter" size="2">
+						<option value="nearest" selected>Nearest</option>
+						<option value="linear">Linear</option>
+					</select>
+					<label for="magFilter">Magnification</label>
+					<select id="magFilter" size="2">
+						<option value="nearest" selected>Nearest</option>
+						<option value="linear">Linear</option>
+					</select>
+					<label for="mipmapFilter">Mipmapping</label>
+					<select id="mipmapFilter" size="2">
+						<option value="nearest" selected>Nearest</option>
+						<option value="linear">Linear</option>
+					</select>
+				</div>
+			</div>
+			<label for="disableMipmap">Disable mipmap</label>
+			<input type="checkbox" id="disableMipmap">
+		</aside>
 	</body>
 </html>
