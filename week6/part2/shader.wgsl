@@ -4,6 +4,7 @@ struct Uniforms {
 	model: mat4x4f,
 	view: mat4x4f,
 	proj: mat4x4f,
+	disable_mipmap: u32,
 }
 @group(0) @binding(0) var<uniform> u: Uniforms;
 @group(0) @binding(1) var samp: sampler;
@@ -24,6 +25,7 @@ fn main_vs(@location(0) pos: vec4f, @location(1) texcoord: vec2f) -> VSOut {
 
 @fragment
 fn main_fs(@location(0) texcoord: vec2f) -> @location(0) vec4f {
-	// Sample the texture and use the colour as-is
+	// If mipmapping is disabled, explicitly read from mip level 0, otherwise use automatic mip level selection
+	if (bool(u.disable_mipmap)) { return textureSampleLevel(texture, samp, texcoord, 0); }
 	return textureSample(texture, samp, texcoord);
 }
