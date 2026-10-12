@@ -25,3 +25,30 @@ body main {
 	grid-template-columns: auto auto;
 	gap: 0.25em 2em;
 }
+
+.selectgrid {
+	display: grid;
+	grid-template-columns: auto repeat(3, 100px);
+	gap: 1em;
+}
+
+.selectrow {
+	display: grid;
+	grid-column: 1 / -1;
+	grid-template-columns: subgrid;
+	grid-auto-flow: column;
+	grid-template-rows: auto auto;
+	align-items: center;
+}
+
+.selectrow span {
+	grid-row: 2;
+}
+
+.selectrow label {
+	text-align: center;
+}
+
+select[size] {
+	overflow: auto;
+}

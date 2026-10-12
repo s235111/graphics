@@ -86,15 +86,6 @@ device.queue.writeTexture({ texture }, textureBuffer, { bytesPerRow: textureSize
 // Generate the mipmaps
 generateMipmaps(device, texture);
 
-// Create a sampler for the texture
-const sampler = device.createSampler({
-	addressModeU: "repeat",
-	addressModeV: "repeat",
-	magFilter: "nearest",
-	minFilter: "nearest",
-	mipmapFilter: "nearest",
-});
-
 // Create the render pipeline
 const pipeline = device.createRenderPipeline({
 	layout: "auto",
@@ -112,22 +103,38 @@ const view = mat4();
 
 // Create the uniform buffer
 const uniformBuffer = device.createBuffer({
-	size: 3 * sizeof["mat4"],
+	size: 3 * sizeof["mat4"] + 16,
 	usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
 });
 // The model matrix is just the identity matrix in this case
 device.queue.writeBuffer(uniformBuffer, 0, flatten(mat4()));
 device.queue.writeBuffer(uniformBuffer, sizeof["mat4"], flatten(view));
 device.queue.writeBuffer(uniformBuffer, sizeof["mat4"] * 2, flatten(mult(Mst, projection)));
+device.queue.writeBuffer(uniformBuffer, sizeof["mat4"] * 3, new Uint32Array([false]));
 
-// Define the bind group for the uniforms, sampler, and texture
-const bindGroup = device.createBindGroup({
-	layout: pipeline.getBindGroupLayout(0),
-	entries: [
-		{ binding: 0, resource: uniformBuffer },
-		{ binding: 1, resource: sampler },
-		{ binding: 2, resource: texture.createView() },
-	],
+// Sampler and bind group
+let sampler;
+let bindGroup;
+const selects = [...document.querySelectorAll("select")];
+const updateSampler = () => {
+	// Create a smapler based on the user-chosen parameters
+	const samplerDescription = Object.fromEntries(selects.map(select => [select.id, select.value]));
+	sampler = device.createSampler(samplerDescription);
+
+	// Define the bind group for the uniforms, sampler, and texture
+	bindGroup = device.createBindGroup({
+		layout: pipeline.getBindGroupLayout(0),
+		entries: [
+			{ binding: 0, resource: uniformBuffer },
+			{ binding: 1, resource: sampler },
+			{ binding: 2, resource: texture.createView() },
+		],
+	});
+};
+updateSampler();
+for (const select of selects) select.addEventListener("input", updateSampler);
+document.getElementById("disableMipmap").addEventListener("input", e => {
+	device.queue.writeBuffer(uniformBuffer, sizeof["mat4"] * 3, new Uint32Array([e.target.checked]));
 });
 
 // Create the depth texture

@@ -10,5 +10,54 @@
 	</head>
 	<body>
 		<canvas width="768" height="512"></canvas>
+		<aside class="options">
+			<div class="selectgrid" style="margin-bottom: 1em;">
+				<div class="selectrow">
+					<span>Wrapping</span>
+					<label for="addressModeU">U</label>
+					<select id="addressModeU" size="2">
+						<option value="clamp-to-edge">Clamp</option>
+						<option value="repeat" selected>Repeat</option>
+					</select>
+					<label for="addressModeV">V</label>
+					<select id="addressModeV" size="2">
+						<option value="clamp-to-edge">Clamp</option>
+						<option value="repeat" selected>Repeat</option>
+					</select>
+				</div>
+				<div class="selectrow">
+					<span>Filtering</span>
+					<label for="minFilter">Minification</label>
+					<select id="minFilter" size="2">
+						<option value="nearest" selected>Nearest</option>
+						<option value="linear">Linear</option>
+					</select>
+					<label for="magFilter">Magnification</label>
+					<select id="magFilter" size="2">
+						<option value="nearest" selected>Nearest</option>
+						<option value="linear">Linear</option>
+					</select>
+					<label for="mipmapFilter">Mipmapping</label>
+					<select id="mipmapFilter" size="2">
+						<option value="nearest" selected>Nearest</option>
+						<option value="linear">Linear</option>
+					</select>
+				</div>
+			</div>
+			<label for="disableMipmap">Disable mipmap</label>
+			<input type="checkbox" id="disableMipmap">
+			<div style="max-width: 470px;">
+				<p>There are two filtering modes, nearest neighbour and linear.</p>
+				<p>For textures, nearest neighbour filtering simply chooses the closest texel, resulting in a sharp but pixelated look.
+					Linear filtering does linear interpolation between the closest texel values,
+					which reduces the pixelation but can cause a very blurry look instead.</p>
+				<p>Minification is the mode to use when a fragment covers more than one texel,
+					and magnification is the mode to use when a texel covers more than one fragment.
+					The mipmap filtering mode affects the blending between mip levels.
+					Nearest-neighbour chooses a specific mip level and samples just that,
+					potentially causing sharp seams to appear where the mip level changes.
+					Linear filtering instead interpolates between the two nearest mip levels, resulting in a smoother transition.</p>
+			</div>
+		</aside>
 	</body>
 </html>
