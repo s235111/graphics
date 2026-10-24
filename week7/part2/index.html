@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+	<head>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<title>Week 7 – Part 2</title>
+		<link rel="preload" as="fetch" type="text/wgsl" href="shader.wgsl" crossorigin="anonymous">
+		<script type="module" src="main.js"></script>
+		<link rel="stylesheet" href="../../style.css">
+		<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.18.7/dist/katex.min.css" integrity="sha384-JctiRyLzXCrSoOOzFlSoWLdyzQl7OrrRnhyeBmzB6ZWtcjccUyc8lCQJqIbs3uQX" crossorigin="anonymous">
+		<script defer src="https://cdn.jsdelivr.net/npm/katex@0.18.7/dist/katex.min.js" integrity="sha384-+7Keh381hSkXmXqnjC0JBM/kzsN6TFj+wMKychSLjTvJ8/0ElMde2uKl8i6p6Buj" crossorigin="anonymous"></script>
+		<script defer src="https://cdn.jsdelivr.net/npm/katex@0.18.7/dist/contrib/auto-render.min.js" integrity="sha384-bjyGPfbij8/NDKJhSGZNP/khQVgtHUE5exjm4Ydllo42FwIgYsdLO2lXGmRBf5Mz" crossorigin="anonymous"></script>
+		<script type="module">renderMathInElement(document.body, { delimiters: [{ left: "$$", right: "$$", display: true }, { left: "$", right: "$", display: false }] });</script>
+	</head>
+	<body>
+		<canvas width="512" height="512"></canvas>
+		<aside class="options">
+			<span id="subdivisions"></span><br>
+			<button id="inc">Increase</button>
+			<button id="dec">Decrease</button><br>
+			<button id="anim">Pause animation</button>
+			<div style="max-width: 470px;">
+				<p>The transformation is essentially the inverse of the view-projection matrix,
+					but leaving the homogeneous (translational) parts zero.
+					Essentially, the texture matrix is:
+					$$\mathbf{M}_\text{tex} = (\mathbf{P}\mathbf{V})^{-1} = \mathbf{V}^{-1}\mathbf{P}^{-1}$$
+					Except that the translational parts are set to zero, as we're only interested in rotation for the “skybox”.</p>
+			</div>
+		</aside>
+	</body>
+</html>
