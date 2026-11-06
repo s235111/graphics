@@ -11,13 +11,29 @@ body {
 	place-content: center;
 }
 
-body:has(.options) {
+body:has(aside.options) {
 	grid-template-columns: auto auto;
+	gap: 16px;
+}
+
+body:has(header.options) {
+	grid-template-rows: auto auto;
 	gap: 16px;
 }
 
 body main {
 	max-width: 60rem;
+}
+
+header.options {
+	display: grid;
+	grid-auto-flow: column;
+	justify-content: center;
+	gap: 16px;
+}
+
+button {
+	height: 2em;
 }
 
 .sliders {
