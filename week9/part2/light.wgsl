@@ -1,6 +1,6 @@
 struct Uniforms {
-	model: mat4x4f,
 	lightViewProj: mat4x4f,
+	model: mat4x4f,
 }
 @group(0) @binding(0) var<uniform> u: Uniforms;
 

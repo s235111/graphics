@@ -15,6 +15,13 @@
 			<button id="animLight" style="width: 180px;">Pause light animation</button>
 			<button id="animTeapot" style="width: 180px;">Pause teapot animation</button>
 		</header>
-		<canvas width="768" height="512"></canvas>
+		<canvas width="512" height="512"></canvas>
+		<div style="max-width: 512px;">
+			<p>For this part, I've made the main render pass use the light's view and projection matrices for tweaking.
+				The light doesn't circle around the centre of the scene, which makes things slightly more complicated.</p>
+			<p>I'm just using a depth32float texture, not a colour <i>and</i> depth texture for the shadow pass.
+				And if a colour texture was used, it would make sense to use r32float, not rgba32float,
+				as the extra channels are redundant.</p>
+		</div>
 	</body>
 </html>

@@ -132,7 +132,7 @@ const shadowPipeline = device.createRenderPipeline({
 
 // Create the projection and view matrices
 const projection = perspective(90, canvas.width / canvas.height, 0.1, 10);
-const lightProjection = perspective(90, 1, 0.1, 10);
+const lightProjection = perspective(100, 1, 0.1, 10);
 // Convert the OpenGL-style projection matrix from MV.js to WebGPU-style
 // This is equivalent to using the Mst as mentioned in the slides
 for (let i = 0; i < 4; i++) projection[2][i] = (projection[2][i] + projection[3][i]) * 0.5;
@@ -141,31 +141,21 @@ const view = mat4();
 
 // Create the uniform buffer for the ground
 const groundUniformBuffer = device.createBuffer({
-	size: 3 * sizeof["mat4"],
+	size: 4 * sizeof["mat4"],
 	usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
 });
 // The model matrix is just the identity matrix in this case
-device.queue.writeBuffer(groundUniformBuffer, 0, flatten(mat4()));
-device.queue.writeBuffer(groundUniformBuffer, sizeof["mat4"], flatten(view));
-device.queue.writeBuffer(groundUniformBuffer, sizeof["mat4"] * 2, flatten(projection));
+device.queue.writeBuffer(groundUniformBuffer, sizeof["mat4"], flatten(mat4()));
+device.queue.writeBuffer(groundUniformBuffer, sizeof["mat4"] * 3, flatten(lightProjection));
 
 // Create the uniform buffer for the teapot
 const teapotUniformBuffer = device.createBuffer({
-	size: 3 * sizeof["mat4"] + 2 * sizeof["vec4"],
+	size: 4 * sizeof["mat4"] + 2 * sizeof["vec4"],
 	usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
 });
-device.queue.writeBuffer(teapotUniformBuffer, 0, flatten(teapotModel));
-device.queue.writeBuffer(teapotUniformBuffer, sizeof["mat4"], flatten(view));
-device.queue.writeBuffer(teapotUniformBuffer, sizeof["mat4"] * 2, flatten(projection));
-device.queue.writeBuffer(teapotUniformBuffer, sizeof["mat4"] * 3, flatten([0, 0, 0, 1]));
-
-// Create the shadow uniform buffer
-const shadowUniformBuffer = device.createBuffer({
-	size: 2 * sizeof["mat4"],
-	usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
-});
-device.queue.writeBuffer(shadowUniformBuffer, 0, flatten(teapotModel));
-// The light view-projection matrix gets written with update() further down
+device.queue.writeBuffer(teapotUniformBuffer, sizeof["mat4"], flatten(teapotModel));
+device.queue.writeBuffer(teapotUniformBuffer, sizeof["mat4"] * 3, flatten(lightProjection));
+device.queue.writeBuffer(teapotUniformBuffer, sizeof["mat4"] * 4, flatten([0, 0, 0, 1]));
 
 // Define the bind group for the uniforms, sampler, and ground texture
 const groundBindGroup = device.createBindGroup({
@@ -183,10 +173,14 @@ const teapotBindGroup = device.createBindGroup({
 	entries: [{ binding: 0, resource: teapotUniformBuffer }],
 });
 
-// Define the bind group for drawing shadows
-const shadowBindGroup = device.createBindGroup({
+// Define the bind groups for drawing shadows
+const groundShadowBindGroup = device.createBindGroup({
 	layout: shadowPipeline.getBindGroupLayout(0),
-	entries: [{ binding: 0, resource: shadowUniformBuffer }],
+	entries: [{ binding: 0, resource: groundUniformBuffer }],
+});
+const teapotShadowBindGroup = device.createBindGroup({
+	layout: shadowPipeline.getBindGroupLayout(0),
+	entries: [{ binding: 0, resource: teapotUniformBuffer }],
 });
 
 // Create the depth texture
@@ -200,7 +194,7 @@ const depthTexture = device.createTexture({
 const shadowTexture = device.createTexture({
 	size: [1024, 1024],
 	format: "depth32float",
-	usage: GPUTextureUsage.RENDER_ATTACHMENT,
+	usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.TEXTURE_BINDING,
 });
 
 function render() {
@@ -218,11 +212,12 @@ function render() {
 	});
 
 	shadowPass.setPipeline(shadowPipeline);
-	shadowPass.setBindGroup(0, shadowBindGroup);
 	shadowPass.setVertexBuffer(0, positionBuffer);
 	shadowPass.setIndexBuffer(indexBuffer, "uint32");
 
+	shadowPass.setBindGroup(0, groundShadowBindGroup);
 	shadowPass.drawIndexed(6);
+	shadowPass.setBindGroup(0, teapotShadowBindGroup);
 	shadowPass.drawIndexed(teapot.indices.length, 1, ground.indices.length, ground.vertices.length / 4);
 
 	shadowPass.end();
@@ -284,7 +279,7 @@ function update(dt) {
 		// Update the teapot position using a bouncing animation
 		teapotTimer = (teapotTimer + dt) % 1;
 		teapotModel[1][3] = 6 * teapotTimer * (1 - teapotTimer) - 1;
-		device.queue.writeBuffer(teapotUniformBuffer, 0, flatten(teapotModel));
+		device.queue.writeBuffer(teapotUniformBuffer, sizeof["mat4"], flatten(teapotModel));
 	}
 	if (animateLight) {
 		// Update the point light position
@@ -292,9 +287,13 @@ function update(dt) {
 		const TAU = 2 * Math.PI;
 		const lx = Math.sin(rotation * TAU) * r;
 		const lz = Math.cos(rotation * TAU) * r - 2;
-		device.queue.writeBuffer(teapotUniformBuffer, 3 * sizeof["mat4"] + sizeof["vec4"], new Float32Array([lx, ly, lz, 1]));
-		const lightView = lookAt([lx, ly, lz], [0, 0, -2], [0, 1, 0]);
-		device.queue.writeBuffer(shadowUniformBuffer, sizeof["mat4"], flatten(mult(lightProjection, lightView)));
+		device.queue.writeBuffer(teapotUniformBuffer, 4 * sizeof["mat4"] + sizeof["vec4"], new Float32Array([lx, ly, lz, 1]));
+		const lightView = lookAt([lx, ly, lz], [0, -1.5, -3], [0, 1, 0]);
+		const lightViewProj = flatten(mult(lightProjection, lightView));
+		device.queue.writeBuffer(groundUniformBuffer, 0, lightViewProj);
+		device.queue.writeBuffer(teapotUniformBuffer, 0, lightViewProj);
+		device.queue.writeBuffer(groundUniformBuffer, 2 * sizeof["mat4"], flatten(lightView));
+		device.queue.writeBuffer(teapotUniformBuffer, 2 * sizeof["mat4"], flatten(lightView));
 	}
 }
 

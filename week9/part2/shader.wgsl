@@ -1,6 +1,7 @@
 const TAU = 6.283185307179586;
 
 struct Uniforms {
+	lightViewProj: mat4x4f,
 	model: mat4x4f,
 	view: mat4x4f,
 	proj: mat4x4f,
