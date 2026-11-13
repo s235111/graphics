@@ -29,11 +29,17 @@ header.options {
 	display: grid;
 	grid-auto-flow: column;
 	justify-content: center;
+	align-items: center;
 	gap: 16px;
 }
 
 button {
 	height: 2em;
+}
+
+.slider {
+	display: grid;
+	text-align: center;
 }
 
 .sliders {

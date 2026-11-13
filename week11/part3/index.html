@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+	<head>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<title>Week 11 – Part 3</title>
+		<link rel="preload" as="fetch" type="text/wgsl" href="shader.wgsl" crossorigin="anonymous">
+		<link rel="preload" as="fetch" type="text/wgsl" href="teapot.wgsl" crossorigin="anonymous">
+		<link rel="preload" as="fetch" type="text/wgsl" href="light.wgsl" crossorigin="anonymous">
+		<script type="module" src="main.js"></script>
+		<link rel="stylesheet" href="../../style.css">
+	</head>
+	<body>
+		<header class="options">
+			<button id="animLight" style="width: 180px;">Pause light animation</button>
+			<button id="animTeapot" style="width: 180px;">Pause teapot animation</button>
+			<div class="slider"><label for="sensitivity">Mouse sensitivity</label><input type="range" min="0" max="2" step="0.1" value="1" id="sensitivity" style="width: 140px;"></div>
+			<div class="slider"><label for="speed">Movement speed</label><input type="range" min="0" max="4" step="0.25" value="2" id="speed" style="width: 140px;"></div>
+		</header>
+		<canvas width="768" height="512"></canvas>
+	</body>
+</html>

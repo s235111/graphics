@@ -383,15 +383,15 @@ export function scalem(x, y, z) {
 
 export function lookAt(eye, at, up) {
 	if (!Array.isArray(eye) || eye.length != 3) {
-		throw "lookAt(): first parameter [eye] must be an a vec3";
+		throw "lookAt(): first parameter [eye] must be a vec3";
 	}
 
 	if (!Array.isArray(at) || at.length != 3) {
-		throw "lookAt(): first parameter [at] must be an a vec3";
+		throw "lookAt(): second parameter [at] must be a vec3";
 	}
 
 	if (!Array.isArray(up) || up.length != 3) {
-		throw "lookAt(): first parameter [up] must be an a vec3";
+		throw "lookAt(): third parameter [up] must be a vec3";
 	}
 
 	if (equal(eye, at)) {
@@ -403,6 +403,63 @@ export function lookAt(eye, at, up) {
 	const u = normalize(cross(n, v));     // "new" up vector
 
 	v = negate(v);
+
+	return mat4(
+		...vec4(...n, -dot(n, eye)),
+		...vec4(...u, -dot(u, eye)),
+		...vec4(...v, -dot(v, eye)),
+		...vec4(),
+	);
+}
+
+export function lookAngles(eye, yaw, pitch) {
+	if (!Array.isArray(eye) || eye.length != 3) {
+		throw "lookAt(): first parameter [eye] must be a vec3";
+	}
+
+	yaw = radians(yaw);
+	pitch = radians(pitch);
+	const cy = Math.cos(yaw);
+	const sy = Math.sin(yaw);
+	const cp = Math.cos(pitch);
+	const sp = Math.sin(pitch);
+
+	const v = vec3(-sy * cp, -sp, cy * cp); // view direction vector
+	const n = vec3(cy, 0, sy);              // perpendicular vector
+	const u = vec3(-sy * sp, cp, cy * sp);  // "new" up vector
+
+	return mat4(
+		...vec4(...n, -dot(n, eye)),
+		...vec4(...u, -dot(u, eye)),
+		...vec4(...v, -dot(v, eye)),
+		...vec4(),
+	);
+}
+
+export function lookVectors(yaw, pitch) {
+	yaw = radians(yaw);
+	pitch = radians(pitch);
+	const cy = Math.cos(yaw);
+	const sy = Math.sin(yaw);
+	const cp = Math.cos(pitch);
+	const sp = Math.sin(pitch);
+
+	const v = vec3(sy * cp, sp, -cy * cp); // view direction vector
+	const n = vec3(cy, 0, sy);             // perpendicular vector
+	const u = vec3(-sy * sp, cp, cy * sp); // "new" up vector
+
+	return [v, n, u];
+}
+
+export function lookFromVectors(eye, forward, right, up) {
+	if (!Array.isArray(eye) || eye.length != 3) { throw "lookAt(): first parameter [eye] must be a vec3"; }
+	if (!Array.isArray(forward) || forward.length != 3) { throw "lookAt(): second parameter [forward] must be a vec3"; }
+	if (!Array.isArray(right) || right.length != 3) { throw "lookAt(): third parameter [right] must be a vec3"; }
+	if (!Array.isArray(up) || up.length != 3) { throw "lookAt(): fourth parameter [up] must be a vec3"; }
+
+	const v = negate(forward); // view direction vector
+	const n = right;           // perpendicular vector
+	const u = up;              // "new" up vector
 
 	return mat4(
 		...vec4(...n, -dot(n, eye)),

@@ -95,6 +95,30 @@ export function scalem(x: number, y: number, z: number): Mat4;
 //
 
 export function lookAt(eye: Vec3, at: Vec3, up: Vec3): Mat4;
+/**
+ * Calculates a view matrix from eye position and yaw/pitch.
+ * @param {vec3}   eye   The eye position.
+ * @param {number} yaw   The yaw in degrees. Right is the positive direction.
+ * @param {number} pitch The pitch in degrees. Up is the positive direction.
+ * @returns A 4x4 view transformation matrix.
+*/
+export function lookAngles(eye: Vec3, yaw: number, pitch: number): Mat4;
+/**
+ * Calculates three orthogonal vectors from yaw and pitch.
+ * @param {number} yaw   The yaw in degrees. Right is the positive direction.
+ * @param {number} pitch The pitch in degrees. Up is the positive direction.
+ * @returns An array containing the forward, right, and up vectors.
+ */
+export function lookVectors(yaw: number, pitch: number): Mat4;
+/**
+ * Calculates a view matrix from eye position and forward/right/up vectors.
+ * @param {vec3} eye     The eye position.
+ * @param {vec3} forward The forward vector.
+ * @param {vec3} right   The right vector.
+ * @param {vec3} up      The up vector.
+ * @returns A 4x4 view transformation matrix.
+ */
+export function lookFromVectors(eye: Vec3, forward: Vec3, right: Vec3, up: Vec3): Mat4;
 
 //----------------------------------------------------------------------------
 //
