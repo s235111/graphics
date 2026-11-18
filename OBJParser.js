@@ -21,11 +21,7 @@ export async function readOBJFile(fileName, scale, reverse, wireframe) {
 	if (!response.ok) return null;
 	const objDoc = new OBJDoc(fileName);
 	const fileText = await response.text();
-	const result = await objDoc.parse(fileText, scale, reverse);
-	if (!result) {
-		console.error("OBJ file parsing error");
-		return null;
-	}
+	await objDoc.parse(fileText, scale, reverse);
 	return wireframe ? objDoc.getWireDrawingInfo() : objDoc.getDrawingInfo();
 }
 
@@ -39,6 +35,7 @@ export class OBJDoc {
 		this.objects = [];
 		this.vertices = [];
 		this.normals = [];
+		this.texcoords = [];
 	};
 
 	// Parsing the OBJ file
@@ -81,6 +78,10 @@ export class OBJDoc {
 					const normal = this.parseNormal(sp);
 					this.normals.push(normal);
 					continue; // Go to the next line
+				case "vt": // Read texture coordinates
+					const texcoord = this.parseTexcoord(sp);
+					this.texcoords.push(texcoord);
+					continue; // Go to the next line
 				case "usemtl": // Read material name
 					currentMaterialName = this.parseUsemtl(sp);
 					continue; // Go to the next line
@@ -90,8 +91,6 @@ export class OBJDoc {
 					continue; // Go to the next line
 			}
 		}
-
-		return true;
 	}
 
 	parseMtllib(sp, fileName) {
@@ -121,6 +120,12 @@ export class OBJDoc {
 		return new Normal(x, y, z);
 	}
 
+	parseTexcoord(sp) {
+		const u = sp.getFloat();
+		const v = sp.getFloat();
+		return new Texcoord(u, v);
+	}
+
 	parseUsemtl(sp) {
 		return sp.getWord();
 	}
@@ -136,6 +141,12 @@ export class OBJDoc {
 			if (subWords.length >= 1) {
 				const vi = parseInt(subWords[0]) - 1;
 				if (!isNaN(vi)) face.vIndices.push(vi);
+			}
+			if (subWords.length >= 2) {
+				const ti = parseInt(subWords[1]) - 1;
+				face.tIndices.push(ti);
+			} else {
+				face.tIndices.push(-1);
 			}
 			if (subWords.length >= 3) {
 				const ni = parseInt(subWords[2]) - 1;
@@ -186,6 +197,7 @@ export class OBJDoc {
 			const n = face.vIndices.length - 2;
 			const newVIndices = new Array(n * 3);
 			const newNIndices = new Array(n * 3);
+			const newTIndices = new Array(n * 3);
 			for (let i = 0; i < n; i++) {
 				newVIndices[i * 3 + 0] = face.vIndices[0];
 				newVIndices[i * 3 + 1] = face.vIndices[i + 1];
@@ -193,9 +205,13 @@ export class OBJDoc {
 				newNIndices[i * 3 + 0] = face.nIndices[0];
 				newNIndices[i * 3 + 1] = face.nIndices[i + 1];
 				newNIndices[i * 3 + 2] = face.nIndices[i + 2];
+				newTIndices[i * 3 + 0] = face.tIndices[0];
+				newTIndices[i * 3 + 1] = face.tIndices[i + 1];
+				newTIndices[i * 3 + 2] = face.tIndices[i + 2];
 			}
 			face.vIndices = newVIndices;
 			face.nIndices = newNIndices;
+			face.tIndices = newTIndices;
 		}
 		face.numIndices = face.vIndices.length;
 
@@ -255,10 +271,11 @@ export class OBJDoc {
 		const numVertices = this.vertices.length;
 		const vertices = new Float32Array(numVertices * 4);
 		const normals = new Float32Array(numVertices * 4);
+		const texcoords = new Float32Array(numVertices * 2);
 		const colors = new Float32Array(numVertices * 4);
 		const indices = new Uint32Array(numIndices);
 
-		// Set vertex, normal, and colour
+		// Set vertex, normal, texcoord, and colour
 		let iIdx = 0;
 		for (const object of this.objects) {
 			for (const face of object.faces) {
@@ -293,12 +310,22 @@ export class OBJDoc {
 						normals[vIdx * 4 + 2] = faceNormal.z;
 						normals[vIdx * 4 + 3] = 0;
 					}
+					// Copy texture coordinates
+					const tIdx = face.nIndices[i];
+					if (tIdx >= 0) {
+						const texcoord = this.texcoords[tIdx];
+						texcoords[vIdx * 2 + 0] = texcoord.u;
+						texcoords[vIdx * 2 + 1] = texcoord.v;
+					} else {
+						texcoords[vIdx * 2 + 0] = 0;
+						texcoords[vIdx * 2 + 1] = 0;
+					}
 					iIdx++;
 				}
 			}
 		}
 
-		return new DrawingInfo(vertices, normals, colors, indices);
+		return new DrawingInfo(vertices, normals, texcoords, colors, indices);
 	}
 
 	//------------------------------------------------------------------------------
@@ -309,11 +336,12 @@ export class OBJDoc {
 		const numVertices = this.vertices.length;
 		const vertices = new Float32Array(numVertices * 4);
 		const normals = new Float32Array(numVertices * 4);
+		const texcoords = new Float32Array(numVertices * 2);
 		const colors = new Float32Array(numVertices * 4);
 		const barycoords = new Float32Array(numVertices * 3);
 		const indices = new Uint32Array(numIndices);
 
-		// Set vertex, normal, and colour
+		// Set vertex, normal, texcoord, and colour
 		let iIdx = 0;
 		for (const object of this.objects) {
 			for (const face of object.faces) {
@@ -348,6 +376,16 @@ export class OBJDoc {
 						normals[iIdx * 4 + 2] = faceNormal.z;
 						normals[iIdx * 4 + 3] = 0;
 					}
+					// Copy texture coordinates
+					const tIdx = face.nIndices[i];
+					if (tIdx >= 0) {
+						const texcoord = this.texcoords[tIdx];
+						texcoords[vIdx * 2 + 0] = texcoord.u;
+						texcoords[vIdx * 2 + 1] = texcoord.v;
+					} else {
+						texcoords[vIdx * 2 + 0] = 0;
+						texcoords[vIdx * 2 + 1] = 0;
+					}
 					// Set barycentric coordinates
 					barycoords[iIdx * 3 + 0] = i % 3 == 0 ? 1 : 0;
 					barycoords[iIdx * 3 + 1] = i % 3 == 1 ? 1 : 0;
@@ -357,7 +395,7 @@ export class OBJDoc {
 			}
 		}
 
-		return new WireDrawingInfo(vertices, normals, colors, barycoords, indices);
+		return new WireDrawingInfo(vertices, normals, texcoords, colors, barycoords, indices);
 	}
 }
 
@@ -415,6 +453,16 @@ export class Normal {
 }
 
 //------------------------------------------------------------------------------
+// Texture Coordinates
+//------------------------------------------------------------------------------
+export class Texcoord {
+	constructor(u, v) {
+		this.u = u;
+		this.v = v;
+	}
+}
+
+//------------------------------------------------------------------------------
 // Color
 //------------------------------------------------------------------------------
 export class Color {
@@ -450,6 +498,7 @@ export class Face {
 		this.materialName = materialName ?? "";
 		this.vIndices = [];
 		this.nIndices = [];
+		this.tIndices = [];
 		this.numIndices = 0;
 	}
 }
@@ -458,9 +507,10 @@ export class Face {
 // DrawingInfo
 //------------------------------------------------------------------------------
 export class DrawingInfo {
-	constructor(vertices, normals, colors, indices) {
+	constructor(vertices, normals, texcoords, colors, indices) {
 		this.vertices = vertices;
 		this.normals = normals;
+		this.texcoords = texcoords;
 		this.colors = colors;
 		this.indices = indices;
 	}
@@ -470,9 +520,10 @@ export class DrawingInfo {
 // WireDrawingInfo
 //------------------------------------------------------------------------------
 export class WireDrawingInfo {
-	constructor(vertices, normals, colors, barycoords, indices) {
+	constructor(vertices, normals, texcoords, colors, barycoords, indices) {
 		this.vertices = vertices;
 		this.normals = normals;
+		this.texcoords = texcoords;
 		this.colors = colors;
 		this.barycoords = barycoords;
 		this.indices = indices;
