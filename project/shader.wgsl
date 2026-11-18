@@ -13,14 +13,15 @@ struct ModelUniforms {
 @group(0) @binding(0) var<uniform> u: Uniforms;
 @group(0) @binding(1) var<uniform> model: ModelUniforms;
 @group(0) @binding(2) var samp: sampler;
-@group(0) @binding(3) var texture: texture_2d<f32>;
-@group(0) @binding(4) var shadowSampler: sampler_comparison;
-@group(0) @binding(5) var shadowTexture: texture_depth_2d;
+@group(0) @binding(3) var diffuseTexture: texture_2d<f32>;
+@group(0) @binding(4) var normalTexture: texture_2d<f32>;
+@group(0) @binding(5) var armTexture: texture_2d<f32>;
+@group(0) @binding(6) var shadowSampler: sampler_comparison;
+@group(0) @binding(7) var shadowTexture: texture_depth_2d;
 
 const Le = vec3f(1.00);
 const La = vec3f(0.50);
 const ks = vec3f(0.25);
-const s = 4;
 
 struct VSOut {
 	@builtin(position) pos: vec4f,
@@ -65,18 +66,24 @@ fn main_fs(@location(0) world_pos: vec4f, @location(1) world_normal: vec4f, @loc
 
 	// Calculate the needed vectors
 	let ωi = normalize(u.light_pos - world_pos);
-	let ωr = reflect(ωi, normal);
+	//let ωr = reflect(ωi, normal);
 	let ωo = normalize(world_pos - u.eye_pos);
+	let ωh = normalize(ωi - ωo);
 
-	// Sample the texture and use it for kd and ka
-	let kd = textureSample(texture, samp, texcoord).rgb;
+	// Sample the textures and calculate their corresponding values
+	let kd = textureSample(diffuseTexture, samp, texcoord).rgb;
 	let ka = kd;
+	let norm = textureSample(normalTexture, samp, texcoord).rgb * 2 - 1;
+	let arm = textureSample(armTexture, samp, texcoord).rgb;
+	visibility *= arm.r;
+	let s = exp2(3 - arm.g);
 
 	// Calculate the lighting values
 	let Li = visibility * Le;
 	let Lrd = kd * Li * max(dot(normal, ωi), 0.0);
 	let Lra = ka * La;
-	let Lrs = ks * Li * pow(max(dot(ωr, ωo), 0), s);
+	//let Lrs = ks * Li * pow(max(dot(ωr, ωo), 0), s);
+	let Lrs = ks * Li * pow(max(dot(ωh, normal), 0), s);
 	let Lo = Lrd + Lrs + Lra;
 
 	// Use the result as the final colour

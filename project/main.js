@@ -1,5 +1,6 @@
 import { add, flatten, length, lookAt, lookFromVectors, lookVectors, mat4, mult, normalize, perspective, scale, sizeof, translate } from "../MV.js";
 import { readOBJFile } from "../OBJParser.js";
+import { generateMipmaps, numMipLevels } from "../mipmap.js";
 
 // Initialise WebGPU and canvas
 const adapter = await navigator.gpu?.requestAdapter();
@@ -66,16 +67,30 @@ device.queue.writeBuffer(indexBuffer, 0, ground.indices);
 device.queue.writeBuffer(indexBuffer, ground.indices.byteLength, teapot.indices);
 
 // Read the ground texture and write it to the GPU
-const groundImg = await fetch("../../textures/xamp23.png").then(_ => _.blob()).then(createImageBitmap);
-const groundTexture = device.createTexture({
-	size: groundImg,
-	format: "rgba8unorm",
-	usage: GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST | GPUTextureUsage.RENDER_ATTACHMENT,
-});
-device.queue.copyExternalImageToTexture({ source: groundImg }, { texture: groundTexture }, groundImg);
+async function loadTexture(path, mipmap) {
+	const image = await fetch(path).then(_ => _.blob()).then(createImageBitmap);
+	const texture = device.createTexture({
+		size: image,
+		format: "rgba8unorm",
+		mipLevelCount: mipmap ? numMipLevels(image.width, image.height) : 1,
+		usage: GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST | GPUTextureUsage.RENDER_ATTACHMENT,
+	});
+	device.queue.copyExternalImageToTexture({ source: image }, { texture }, image);
+	if (mipmap) generateMipmaps(device, texture);
+	return texture;
+}
+async function loadMaterial(name, mipmap) {
+	const path = "../textures/" + name;
+	const [diffuse, normal, arm] = await Promise.all(["diff", "nor", "arm"].map(_ => loadTexture(`${path}_${_}.png`, mipmap)));
+	return { diffuse, normal, arm };
+}
+const groundTexture = await loadTexture("../textures/xamp23.png", false);
+const concreteMaterial = await loadMaterial("concrete_pavement_02", true);
 
-// Create a sampler for the texture
+// Create a sampler for the textures
 const sampler = device.createSampler({
+	addressModeU: "repeat",
+	addressModeV: "repeat",
 	magFilter: "linear",
 	minFilter: "linear",
 });
@@ -145,16 +160,24 @@ const shadowTexture = device.createTexture({
 	usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.TEXTURE_BINDING,
 });
 
-function createBindGroups(modelUniformBuffer, texture) {
+// Create single pixel textures as defaults if the appropriate texture is unspecified
+const whiteTexture = device.createTexture({ size: [1, 1], format: "rgba8unorm", usage: GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST });
+const flatTexture = device.createTexture({ size: [1, 1], format: "rgba8unorm", usage: GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST });
+device.queue.writeTexture({ texture: whiteTexture }, new Uint8Array([255, 255, 255, 255]), { bytesPerRow: 4 }, [1, 1]);
+device.queue.writeTexture({ texture: flatTexture }, new Uint8Array([128, 128, 255, 255]), { bytesPerRow: 4 }, [1, 1]);
+
+function createBindGroups(modelUniformBuffer, material) {
 	const mainBindGroup = device.createBindGroup({
 		layout: mainPipeline.getBindGroupLayout(0),
 		entries: [
 			{ binding: 0, resource: uniformBuffer },
 			{ binding: 1, resource: modelUniformBuffer },
 			{ binding: 2, resource: sampler },
-			{ binding: 3, resource: texture.createView() },
-			{ binding: 4, resource: shadowSampler },
-			{ binding: 5, resource: shadowTexture.createView() },
+			{ binding: 3, resource: (material.diffuse ?? whiteTexture).createView() },
+			{ binding: 4, resource: (material.normal ?? flatTexture).createView() },
+			{ binding: 5, resource: (material.arm ?? whiteTexture).createView() },
+			{ binding: 6, resource: shadowSampler },
+			{ binding: 7, resource: shadowTexture.createView() },
 		],
 	});
 
@@ -170,8 +193,8 @@ function createBindGroups(modelUniformBuffer, texture) {
 }
 
 // Define the bind groups
-const [groundBindGroup, groundShadowBindGroup] = createBindGroups(groundUniformBuffer, groundTexture);
-const [teapotBindGroup, teapotShadowBindGroup] = createBindGroups(teapotUniformBuffer, groundTexture);
+const [groundBindGroup, groundShadowBindGroup] = createBindGroups(groundUniformBuffer, concreteMaterial);
+const [teapotBindGroup, teapotShadowBindGroup] = createBindGroups(teapotUniformBuffer, {});
 
 function render() {
 	const encoder = device.createCommandEncoder();
@@ -273,7 +296,7 @@ function update(dt) {
 	// Update the point light position and calculate the light view-projection matrix
 	//const lightPos = add(cameraPos, scale(1, forward));
 	//const lightView = lookFromVectors(lightPos, forward, right, up);
-	const lightPos = [0, 1, 2];
+	const lightPos = [0, 1, 0];
 	const lightView = lookAt(lightPos, [0, 0, -2], [0, 1, 0]);
 	const lightViewProj = flatten(mult(lightProjection, lightView));
 	// Update everything on the GPU
