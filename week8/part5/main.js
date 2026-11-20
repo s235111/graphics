@@ -10,10 +10,9 @@ const format = navigator.gpu.getPreferredCanvasFormat();
 ctx.configure({ device, format });
 
 // Create the shader module
-const wgslLinks = [...document.querySelectorAll("link[type=\"text/wgsl\"]")];
-const [groundCode, teapotCode] = await Promise.all(wgslLinks.map(link => fetch(link.href).then(_ => _.text())));
-const module = device.createShaderModule({ code: groundCode });
-const teapotModule = device.createShaderModule({ code: teapotCode });
+const wgslPath = document.querySelector("link[type=\"text/wgsl\"]").href;
+const code = await fetch(wgslPath).then(_ => _.text());
+const module = device.createShaderModule({ code });
 
 // Make a simple plane with texture coordinates
 const ground = {
@@ -105,8 +104,8 @@ const sampler = device.createSampler({
 // Create the render pipeline for the ground
 const groundPipeline = device.createRenderPipeline({
 	layout: "auto",
-	vertex: { module: module, entryPoint: "main_vs", buffers: [positionBufferLayout, texcoordBufferLayout] },
-	fragment: { module: module, entryPoint: "main_fs", targets: [{ format }] },
+	vertex: { module, entryPoint: "main_vs", buffers: [positionBufferLayout, texcoordBufferLayout] },
+	fragment: { module, entryPoint: "main_fs", targets: [{ format }] },
 	depthStencil: { depthWriteEnabled: true, depthCompare: "less", format: "depth24plus-stencil8", stencilFront: { passOp: "replace" } },
 	primitive: { topology: "triangle-list", cullMode: "back" },
 });
@@ -114,8 +113,8 @@ const groundPipeline = device.createRenderPipeline({
 // Create the render pipeline for the teapot
 const teapotPipeline = device.createRenderPipeline({
 	layout: "auto",
-	vertex: { module: teapotModule, entryPoint: "main_vs", buffers: [positionBufferLayout, normalBufferLayout] },
-	fragment: { module: teapotModule, entryPoint: "main_fs", targets: [{ format }] },
+	vertex: { module, entryPoint: "teapot_vs", buffers: [positionBufferLayout, normalBufferLayout] },
+	fragment: { module, entryPoint: "teapot_fs", targets: [{ format }] },
 	depthStencil: { depthWriteEnabled: true, depthCompare: "less", format: "depth24plus-stencil8" },
 	primitive: { topology: "triangle-list", cullMode: "back" },
 });
@@ -123,8 +122,8 @@ const teapotPipeline = device.createRenderPipeline({
 // Create the render pipeline for drawing shadows
 const shadowPipeline = device.createRenderPipeline({
 	layout: "auto",
-	vertex: { module: module, entryPoint: "main_vs", buffers: [positionBufferLayout, texcoordBufferLayout] },
-	fragment: { module: module, entryPoint: "main_fs", targets: [{ format, blend: { color: { srcFactor: "constant", dstFactor: "one-minus-constant" }, alpha: {} } }] },
+	vertex: { module, entryPoint: "main_vs", buffers: [positionBufferLayout, texcoordBufferLayout] },
+	fragment: { module, entryPoint: "main_fs", targets: [{ format, blend: { color: { srcFactor: "constant", dstFactor: "one-minus-constant" }, alpha: {} } }] },
 	depthStencil: { depthWriteEnabled: true, depthCompare: "always", format: "depth24plus-stencil8", stencilFront: { compare: "equal", passOp: "zero" } },
 	primitive: { topology: "triangle-list", cullMode: "back" },
 });
