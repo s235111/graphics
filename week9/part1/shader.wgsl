@@ -28,3 +28,60 @@ fn main_fs(@location(0) texcoord: vec2f) -> @location(0) vec4f {
 	// Sample the texture and use the colour as-is
 	return u.visibility * textureSample(texture, samp, texcoord);
 }
+
+struct TeapotUniforms {
+	model: mat4x4f,
+	view: mat4x4f,
+	proj: mat4x4f,
+	eye_pos: vec4f,
+	light_pos: vec4f,
+}
+@group(0) @binding(0) var<uniform> tu: TeapotUniforms;
+
+const Le = vec3f(1.00);
+const La = vec3f(0.50);
+const kd = vec3f(0.50);
+const ka = kd;
+const ks = vec3f(0.25);
+const Li = Le;
+const s = 4;
+
+struct TeapotVSOut {
+	@builtin(position) pos: vec4f,
+	@location(0) world_pos: vec4f,
+	@location(1) world_normal: vec4f,
+}
+
+@vertex
+fn teapot_vs(@location(0) pos: vec4f, @location(1) normal: vec4f) -> TeapotVSOut {
+	// Get the model vectors in world space
+	let world_pos = tu.model * pos;
+	let world_normal = tu.model * normal;
+
+	// Output the results for the fragment shader
+	var out: TeapotVSOut;
+	out.pos = tu.proj * tu.view * world_pos;
+	out.world_pos = world_pos;
+	out.world_normal = world_normal;
+	return out;
+}
+
+@fragment
+fn teapot_fs(@location(0) world_pos: vec4f, @location(1) world_normal: vec4f) -> @location(0) vec4f {
+	// Renormalise the normal
+	let normal = normalize(world_normal);
+
+	// Calculate the needed vectors
+	let ωi = normalize(tu.light_pos - world_pos);
+	let ωr = reflect(ωi, normal);
+	let ωo = normalize(world_pos - tu.eye_pos);
+
+	// Calculate the lighting values
+	let Lrd = kd * Li * max(dot(normal, ωi), 0.0);
+	let Lra = ka * La;
+	let Lrs = ks * Li * pow(max(dot(ωr, ωo), 0), s);
+	let Lo = Lrd + Lrs + Lra;
+
+	// Use the result as the final colour
+	return vec4f(Lo, 1.0);
+}
