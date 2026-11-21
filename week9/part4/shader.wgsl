@@ -14,6 +14,23 @@ struct Uniforms {
 @group(0) @binding(3) var shadowSampler: sampler_comparison;
 @group(0) @binding(4) var shadowTexture: texture_depth_2d;
 
+fn sample_shadow(world_pos: vec4f) -> f32 {
+	// Sample the shadow map for light visibility using PCF
+	var shadow_pos = u.lightViewProj * world_pos;
+	shadow_pos /= shadow_pos.w;
+	let shadow_coord = vec2f(shadow_pos.x * 0.5 + 0.5, shadow_pos.y * -0.5 + 0.5);
+	var visibility = 0.0;
+	let texel_size = 1.0 / vec2f(textureDimensions(shadowTexture));
+	for (var y = -1.5; y <= 1.5; y += 1.0) {
+		for (var x = -1.5; x <= 1.5; x += 1.0) {
+			let sample_coord = shadow_coord + vec2f(x, y) * texel_size;
+			visibility += textureSampleCompareLevel(shadowTexture, shadowSampler, sample_coord, shadow_pos.z - 0.001);
+		}
+	}
+	visibility *= 0.0625;
+	return visibility;
+}
+
 struct VSOut {
 	@builtin(position) pos: vec4f,
 	@location(0) world_pos: vec4f,
@@ -33,18 +50,7 @@ fn main_vs(@location(0) pos: vec4f, @location(1) texcoord: vec2f) -> VSOut {
 @fragment
 fn main_fs(@builtin(position) pos: vec4f, @location(0) world_pos: vec4f, @location(1) texcoord: vec2f) -> @location(0) vec4f {
 	// Sample the shadow map for light visibility using PCF
-	var shadow_pos = u.lightViewProj * world_pos;
-	shadow_pos /= shadow_pos.w;
-	let shadow_coord = vec2f(shadow_pos.x * 0.5 + 0.5, shadow_pos.y * -0.5 + 0.5);
-	var visibility = 0.0;
-	let texel_size = 1.0 / vec2f(textureDimensions(shadowTexture));
-	for (var y = -1.5; y <= 1.5; y += 1.0) {
-		for (var x = -1.5; x <= 1.5; x += 1.0) {
-			let sample_coord = shadow_coord + vec2f(x, y) * texel_size;
-			visibility += textureSampleCompareLevel(shadowTexture, shadowSampler, sample_coord, shadow_pos.z - 0.001);
-		}
-	}
-	visibility *= 0.0625;
+	let visibility = sample_shadow(world_pos);
 
 	// Make shadows not completely dark
 	let light = visibility * 0.75 + 0.25;
@@ -83,18 +89,7 @@ fn teapot_vs(@location(0) pos: vec4f, @location(1) normal: vec4f) -> TeapotVSOut
 @fragment
 fn teapot_fs(@location(0) world_pos: vec4f, @location(1) world_normal: vec4f) -> @location(0) vec4f {
 	// Sample the shadow map for light visibility using PCF
-	var shadow_pos = u.lightViewProj * world_pos;
-	shadow_pos /= shadow_pos.w;
-	let shadow_coord = vec2f(shadow_pos.x * 0.5 + 0.5, shadow_pos.y * -0.5 + 0.5);
-	var visibility = 0.0;
-	let texel_size = 1.0 / vec2f(textureDimensions(shadowTexture));
-	for (var y = -1.5; y <= 1.5; y += 1.0) {
-		for (var x = -1.5; x <= 1.5; x += 1.0) {
-			let sample_coord = shadow_coord + vec2f(x, y) * texel_size;
-			visibility += textureSampleCompareLevel(shadowTexture, shadowSampler, sample_coord, shadow_pos.z - 0.001);
-		}
-	}
-	visibility *= 0.0625;
+	let visibility = sample_shadow(world_pos);
 
 	// Renormalise the normal
 	let normal = normalize(world_normal);

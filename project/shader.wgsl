@@ -45,8 +45,7 @@ fn main_vs(@location(0) pos: vec4f, @location(1) normal: vec4f, @location(2) tex
 	return out;
 }
 
-@fragment
-fn main_fs(@location(0) world_pos: vec4f, @location(1) world_normal: vec4f, @location(2) texcoord: vec2f) -> @location(0) vec4f {
+fn sample_shadow(world_pos: vec4f) -> f32 {
 	// Sample the shadow map for light visibility using PCF
 	var shadow_pos = u.lightViewProj * world_pos;
 	shadow_pos /= shadow_pos.w;
@@ -60,6 +59,13 @@ fn main_fs(@location(0) world_pos: vec4f, @location(1) world_normal: vec4f, @loc
 		}
 	}
 	visibility *= 0.0625;
+	return visibility;
+}
+
+@fragment
+fn main_fs(@location(0) world_pos: vec4f, @location(1) world_normal: vec4f, @location(2) texcoord: vec2f) -> @location(0) vec4f {
+	// Sample the shadow map for light visibility using PCF
+	let visibility = sample_shadow(world_pos);
 
 	// Renormalise the normal
 	let normal = normalize(world_normal);
